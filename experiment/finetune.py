@@ -7,7 +7,8 @@ from transformers import (
     DataCollatorForSeq2Seq,
     TrainingArguments,
     Trainer,
-    GenerationConfig
+    GenerationConfig,
+    BitsAndBytesConfig
 )
 from peft import LoraConfig, TaskType, get_peft_model
 
@@ -59,13 +60,17 @@ def main():
     # 3. 对数据集进行预处理（这里使用 map 传入额外的 tokenizer 参数）
     tokenized_dataset = ds.map(lambda ex: process_func(ex, tokenizer), remove_columns=ds.column_names)
     
-    # 4. 加载预训练模型，不使用8位量化
+    # 4. 加载预训练模型（使用 8 位量化、低 CPU 内存模式等配置）
+    bnb_config = BitsAndBytesConfig(
+        load_in_8bit=True,
+    )
     model = AutoModelForCausalLM.from_pretrained(
         args.model_dir, 
         trust_remote_code=True, 
-        torch_dtype=torch.float16,  # GPU上通常使用float16；如果是CPU，可以改为torch.float32
+        torch_dtype=torch.half, 
         device_map="auto",
         low_cpu_mem_usage=True,
+        quantization_config=bnb_config,
     )
     
     # 5. 配置生成参数，确保 pad_token 与 eos_token 一致
