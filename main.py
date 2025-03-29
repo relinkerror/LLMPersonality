@@ -174,7 +174,7 @@ def main():
     args = parser.parse_args()
 
     client = openai.OpenAI(
-        api_key="sk-c130ea11433a4dbebfd25ebb5b275f95",  # 请替换为实际的 API 密钥
+        api_key="",  # 请替换为实际的 API 密钥
         base_url="https://api.deepseek.com"
     )
 
