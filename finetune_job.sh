@@ -10,4 +10,4 @@
 module load python/3.12
 
 # 执行你的 AI 程序
-python experiment/finetunr.py
+python experiment/finetune.py
