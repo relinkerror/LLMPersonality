@@ -8,7 +8,6 @@
 
 # 加载必要模块
 module load python/3.12
-module load cuda/11.0
 
 # 执行你的 AI 程序
-python finetunr.py
+python experiment/finetunr.py
