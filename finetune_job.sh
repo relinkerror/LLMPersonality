@@ -8,6 +8,7 @@
 
 # 加载必要模块
 module load python/3.12
+pip install torch --no-index
 
 # 执行你的 AI 程序
 python experiment/finetune.py
