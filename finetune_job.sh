@@ -6,7 +6,7 @@
 #SBATCH --time=08:00:00
 #SBATCH --mem=64G
 #SBATCH --cpus-per-task=8
-#SBATCH --gres=gpu:8
+#SBATCH --gres=gpu:4
 #SBATCH --array=0-2
 
 # 根据 SLURM_ARRAY_TASK_ID 选择不同参数
