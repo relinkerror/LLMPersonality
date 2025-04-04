@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/project/6078835/gn533549/LLMPersonality/LLMPersonality/experiment/finetune.py", line 3, in <module>
+    from datasets import Dataset
+  File "/project/6078835/gn533549/LLMPersonality/ENV/lib/python3.12/site-packages/datasets/__init__.py", line 17, in <module>
+    from .arrow_dataset import Dataset
+  File "/project/6078835/gn533549/LLMPersonality/ENV/lib/python3.12/site-packages/datasets/arrow_dataset.py", line 57, in <module>
+    import pyarrow as pa
+ModuleNotFoundError: No module named 'pyarrow'

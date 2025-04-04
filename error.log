@@ -1,2 +1,0 @@
-/localscratch/spool/slurmd/job57985210/slurm_script: line 18: 153278 Killed                  python experiment/finetune.py
-slurmstepd: error: Detected 1 oom_kill event in StepId=57985210.batch. Some of the step tasks have been OOM Killed.
