@@ -17,6 +17,8 @@ source /project/6078835/gn533549/LLMPersonality/ENV/bin/activate
 pip install pyarrow --no-index
 pip install torch --no-index
 
+export TRANSFORMERS_NO_SAFE_TENSORS=1
+
 # 根据 SLURM_ARRAY_TASK_ID 选择不同参数
 if [ $SLURM_ARRAY_TASK_ID -eq 0 ]; then
     DATASET_PATH="./datax/CPED/extraversion_low_pairs.csv"
