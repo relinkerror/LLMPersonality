@@ -9,6 +9,14 @@
 #SBATCH --gres=gpu:4
 #SBATCH --array=0-2
 
+# 加载必要模块
+module load python/3.12
+module load gcc
+module load arrow/19
+source /project/6078835/gn533549/LLMPersonality/ENV/bin/activate
+pip install pyarrow --no-index
+pip install torch --no-index
+
 # 根据 SLURM_ARRAY_TASK_ID 选择不同参数
 if [ $SLURM_ARRAY_TASK_ID -eq 0 ]; then
     DATASET_PATH="./datax/CPED/extraversion_low_pairs.csv"
