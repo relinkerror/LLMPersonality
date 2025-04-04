@@ -73,7 +73,7 @@ def main():
         torch_dtype=torch.half, 
         device_map="auto",
         low_cpu_mem_usage=True,
-        quantization_config=bnb_config,
+        #quantization_config=bnb_config,
     )
     print("预训练模型加载成功")
     
