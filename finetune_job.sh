@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=ai_job_array
+#SBATCH --job-name=finetune_job_array
 #SBATCH --output=output_%a.log
 #SBATCH --error=error_%a.log
 #SBATCH --ntasks=1
@@ -7,7 +7,7 @@
 #SBATCH --mem=64G
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:8
-#SBATCH --array=0-1
+#SBATCH --array=0-2
 
 # 根据 SLURM_ARRAY_TASK_ID 选择不同参数
 if [ $SLURM_ARRAY_TASK_ID -eq 0 ]; then
