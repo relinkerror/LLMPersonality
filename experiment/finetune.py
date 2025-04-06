@@ -68,8 +68,10 @@ def main():
     tokenizer.padding_side = 'right'
     tokenized_dataset = ds.map(lambda ex: process_func(ex, tokenizer), remove_columns=ds.column_names)
 
-    bnb_config = BitsAndBytesConfig(
-        load_in_8bit=True,
+    quantization_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_compute_dtype=torch.float16,
+        bnb_4bit_quant_type="nf4",
     )
     # 使用 device_map="auto" 让 Transformers 自动分配到多个 GPU 上
     model = AutoModelForCausalLM.from_pretrained(
@@ -78,7 +80,7 @@ def main():
         torch_dtype=torch.half, 
         device_map="auto",
         low_cpu_mem_usage=True,
-        quantization_config=bnb_config,
+        quantization_config=quantization_config,
     )
     print("模型加载后 - allocated:", torch.cuda.memory_allocated())
     print("模型加载后 - reserved:", torch.cuda.memory_reserved())
