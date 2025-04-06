@@ -75,12 +75,13 @@ def main():
     )
     # 使用 device_map="auto" 让 Transformers 自动分配到多个 GPU 上
     model = AutoModelForCausalLM.from_pretrained(
-        args.model_dir, 
-        trust_remote_code=True, 
-        torch_dtype=torch.half, 
+        args.model_dir,
+        trust_remote_code=True,
+        torch_dtype=torch.half,
         device_map="auto",
         low_cpu_mem_usage=True,
         quantization_config=quantization_config,
+        attn_implementation="sdpa",  # 或者 "sdpa"
     )
     print("模型加载后 - allocated:", torch.cuda.memory_allocated())
     print("模型加载后 - reserved:", torch.cuda.memory_reserved())
@@ -107,12 +108,19 @@ def main():
         gradient_accumulation_steps=1,
         logging_steps=10,
         num_train_epochs=3,
-        save_steps=100,
+        save_strategy="epoch",
+        save_total_limit=3,
+        evaluation_strategy="epoch",
+        eval_steps=500,
         learning_rate=1e-4,
         save_on_each_node=True,
         gradient_checkpointing=True,
-        optim="paged_adamw_32bit"
+        optim="paged_adamw_32bit",
+        load_best_model_at_end=True,
+        metric_for_best_model="eval_loss",
+        greater_is_better=False,
     )
+
     
     # 使用自定义的 Trainer
     trainer = CustomTrainer(
