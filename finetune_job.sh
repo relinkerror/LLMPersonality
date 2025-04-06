@@ -20,20 +20,19 @@ pip install torch --no-index
 export TRANSFORMERS_NO_SAFE_TENSORS=1
 
 # 根据 SLURM_ARRAY_TASK_ID 选择不同参数
-#if [ $SLURM_ARRAY_TASK_ID -eq 0 ]; then
-#    DATASET_PATH="./datax/CPED/extraversion_low_pairs.csv"
-#    MODEL_DIR="./models/QwQ-32B"
-#    OUTPUT_DIR="./models/Extraversion_low"
-#elif [ $SLURM_ARRAY_TASK_ID -eq 1 ]; then
-#    DATASET_PATH="./datax/CPED/conscientiousness_high_pairs.csv"
-#    MODEL_DIR="./models/QwQ-32B"
-#    OUTPUT_DIR="./models/Conscientiousness_high"
-#elif [ $SLURM_ARRAY_TASK_ID -eq 2 ]; then
-#    DATASET_PATH="./datax/CPED/neuroticism_high_pairs.csv"
-#    MODEL_DIR="./models/QwQ-32B"
-#    OUTPUT_DIR="./models/Neuroticism_high"
-#fi
+if [ $SLURM_ARRAY_TASK_ID -eq 0 ]; then
+    DATASET_PATH="./datax/CPED/extraversion_low_pairs.csv"
+    MODEL_DIR="./models/QwQ-32B"
+    OUTPUT_DIR="./models/Extraversion_low"
+elif [ $SLURM_ARRAY_TASK_ID -eq 1 ]; then
+    DATASET_PATH="./datax/CPED/conscientiousness_high_pairs.csv"
+    MODEL_DIR="./models/QwQ-32B"
+    OUTPUT_DIR="./models/Conscientiousness_high"
+elif [ $SLURM_ARRAY_TASK_ID -eq 2 ]; then
+    DATASET_PATH="./datax/CPED/neuroticism_high_pairs.csv"
+    MODEL_DIR="./models/QwQ-32B"
+    OUTPUT_DIR="./models/Neuroticism_high"
+fi
 
 # 运行微调程序
-#python experiment/finetune.py --dataset_path $DATASET_PATH --model_dir $MODEL_DIR --output_dir $OUTPUT_DIR
-python experiment/finetune.py
+python experiment/finetune.py --dataset_path $DATASET_PATH --model_dir $MODEL_DIR --output_dir $OUTPUT_DIR
