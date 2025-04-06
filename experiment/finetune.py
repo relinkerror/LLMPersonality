@@ -68,7 +68,7 @@ def main():
         args.model_dir, 
         trust_remote_code=True, 
         torch_dtype=torch.half, 
-        device_map="auto",
+        device_map="balanced",
         low_cpu_mem_usage=True,
         quantization_config=bnb_config,
     )

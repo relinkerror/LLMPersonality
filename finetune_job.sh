@@ -38,6 +38,7 @@ fi
 # 设置分布式训练环境变量
 export MASTER_ADDR=$(hostname)
 export MASTER_PORT=3456
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 # 使用 torch.distributed.run 启动多进程（每个 GPU 启动一个进程）
 srun python -m torch.distributed.run \
