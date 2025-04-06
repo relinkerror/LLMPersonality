@@ -13,6 +13,7 @@
 module load python/3.12
 module load gcc
 module load arrow/19
+module load cuda/11
 source /project/6078835/gn533549/LLMPersonality/ENV/bin/activate
 pip install pyarrow --no-index
 pip install torch --no-index
@@ -34,5 +35,14 @@ elif [ $SLURM_ARRAY_TASK_ID -eq 2 ]; then
     OUTPUT_DIR="./models/Neuroticism_high"
 fi
 
-# 运行微调程序
-python experiment/finetune.py --dataset_path $DATASET_PATH --model_dir $MODEL_DIR --output_dir $OUTPUT_DIR
+# 设置分布式训练环境变量
+export MASTER_ADDR=$(hostname)
+export MASTER_PORT=3456
+
+# 使用 torch.distributed.run 启动多进程（每个 GPU 启动一个进程）
+srun python -m torch.distributed.run \
+    --nproc_per_node=4 \
+    experiment/finetune.py \
+    --dataset_path $DATASET_PATH \
+    --model_dir $MODEL_DIR \
+    --output_dir $OUTPUT_DIR
