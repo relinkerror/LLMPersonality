@@ -15,8 +15,8 @@ from peft import LoraConfig, TaskType, get_peft_model
 
 # 自定义 Trainer，确保计算 loss 时 labels 在 logits 同一设备上
 class CustomTrainer(Trainer):
-    def compute_loss(self, model, inputs, return_outputs=False):
-        # 获取 labels 并延迟到输出设备
+    def compute_loss(self, model, inputs, **kwargs):
+        # 提取 labels 并确保在与 logits 同一设备上
         if "labels" in inputs:
             labels = inputs["labels"]
         else:
@@ -24,10 +24,10 @@ class CustomTrainer(Trainer):
         outputs = model(**inputs)
         logits = outputs.get("logits")
         if labels is not None:
-            # 将 labels 移动到 logits 所在的设备
             inputs["labels"] = labels.to(logits.device)
         loss = outputs.loss
-        return (loss, outputs) if return_outputs else loss
+        return loss
+
 
 def process_func(example, tokenizer, max_length=384):
     """
