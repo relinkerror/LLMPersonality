@@ -1,4 +1,5 @@
 import argparse
+import gc
 import torch
 from datasets import Dataset
 from transformers import (
@@ -41,6 +42,12 @@ def process_func(example, tokenizer, max_length=384):
     }
 
 def main():
+    # 清理缓存和垃圾回收
+    torch.cuda.empty_cache()
+    gc.collect()
+    print("程序开始时 - allocated:", torch.cuda.memory_allocated())
+    print("程序开始时 - reserved:", torch.cuda.memory_reserved())
+
     parser = argparse.ArgumentParser(description="微调模型参数设置")
     parser.add_argument("--dataset_path", type=str, default="./datax/CPED/extraversion_low_pairs.csv",
                         help="CSV 数据集路径")
@@ -70,8 +77,10 @@ def main():
         torch_dtype=torch.half, 
         device_map="balanced",
         low_cpu_mem_usage=True,
-        quantization_config=bnb_config,
+        # quantization_config=bnb_config,
     )
+    print("模型加载后 - allocated:", torch.cuda.memory_allocated())
+    print("模型加载后 - reserved:", torch.cuda.memory_reserved())
     
     # 5. 配置生成参数，确保 pad_token 与 eos_token 一致
     model.generation_config = GenerationConfig.from_pretrained(args.model_dir)
@@ -116,12 +125,20 @@ def main():
     
     # 10. 开始训练
     trainer.train()
+    print("训练结束后 - allocated:", torch.cuda.memory_allocated())
+    print("训练结束后 - reserved:", torch.cuda.memory_reserved())
     
     # 11. 测试生成效果
     test_text = "I loved."
     inputs = tokenizer(f"User: {test_text}\n\n", return_tensors="pt")
     inputs = inputs.to(model.device)
+    print("生成前 - allocated:", torch.cuda.memory_allocated())
+    print("生成前 - reserved:", torch.cuda.memory_reserved())
+    
     outputs = model.generate(**inputs, max_new_tokens=100)
+    print("生成后 - allocated:", torch.cuda.memory_allocated())
+    print("生成后 - reserved:", torch.cuda.memory_reserved())
+    
     result = tokenizer.decode(outputs[0], skip_special_tokens=True)
     print("生成结果：", result)
     
