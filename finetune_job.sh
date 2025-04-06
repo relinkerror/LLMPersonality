@@ -3,7 +3,7 @@
 #SBATCH --output=output_%a.log
 #SBATCH --error=error_%a.log
 #SBATCH --ntasks=1
-#SBATCH --time=08:00:00
+#SBATCH --time=24:00:00
 #SBATCH --mem=128G
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:4
