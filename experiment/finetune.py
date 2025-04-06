@@ -75,9 +75,9 @@ def main():
         args.model_dir, 
         trust_remote_code=True, 
         torch_dtype=torch.half, 
-        device_map="balanced",
+        device_map="auto",
         low_cpu_mem_usage=True,
-        # quantization_config=bnb_config,
+        quantization_config=bnb_config,
     )
     print("模型加载后 - allocated:", torch.cuda.memory_allocated())
     print("模型加载后 - reserved:", torch.cuda.memory_reserved())
