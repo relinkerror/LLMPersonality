@@ -73,7 +73,7 @@ def main():
         torch_dtype=torch.half, 
         device_map="auto",
         low_cpu_mem_usage=True,
-        #quantization_config=bnb_config,
+        quantization_config=bnb_config,
     )
     print("预训练模型加载成功")
     
@@ -88,7 +88,6 @@ def main():
     print("配置 LoRA 参数并改造模型...")
     lora_config = LoraConfig(
         task_type=TaskType.CAUSAL_LM, 
-        target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
         inference_mode=False,
         r=8,
         lora_alpha=32,
