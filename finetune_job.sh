@@ -13,7 +13,7 @@
 module load python/3.12
 module load gcc
 module load arrow/19
-module load cuda/11
+module load cuda
 source /project/6078835/gn533549/LLMPersonality/ENV/bin/activate
 pip install pyarrow --no-index
 pip install torch --no-index
