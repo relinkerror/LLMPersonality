@@ -23,16 +23,16 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 # 根据 SLURM_ARRAY_TASK_ID 选择不同参数
 if [ $SLURM_ARRAY_TASK_ID -eq 0 ]; then
     DATASET_PATH="./datax/CPED/extraversion_low_pairs.csv"
-    MODEL_DIR="./models/QwQ-32B"
-    OUTPUT_DIR="./models/Extraversion_low"
+    MODEL_DIR="./models/DeepSeek-R1-Distill-Qwen-32B"
+    OUTPUT_DIR="./models/Qwen_Extraversion_low"
 elif [ $SLURM_ARRAY_TASK_ID -eq 1 ]; then
     DATASET_PATH="./datax/CPED/conscientiousness_high_pairs.csv"
-    MODEL_DIR="./models/QwQ-32B"
-    OUTPUT_DIR="./models/Conscientiousness_high"
+    MODEL_DIR="./models/DeepSeek-R1-Distill-Qwen-32B"
+    OUTPUT_DIR="./models/Qwen_Conscientiousness_high"
 elif [ $SLURM_ARRAY_TASK_ID -eq 2 ]; then
     DATASET_PATH="./datax/CPED/neuroticism_high_pairs.csv"
-    MODEL_DIR="./models/QwQ-32B"
-    OUTPUT_DIR="./models/Neuroticism_high"
+    MODEL_DIR="./models/DeepSeek-R1-Distill-Qwen-32B"
+    OUTPUT_DIR="./models/Qwen_Neuroticism_high"
 fi
 
 # 运行微调程序
