@@ -16,6 +16,7 @@ module load arrow/19
 source /project/6078835/gn533549/LLMPersonality/ENV/bin/activate
 pip install pyarrow --no-index
 pip install torch --no-index
+pip install --no-index torch deepspeed
 pip install ms-swift
 
 
