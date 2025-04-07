@@ -176,6 +176,7 @@ def main():
     tokenizer.save_pretrained(args.output_dir)
 
 if __name__ == "__main__":
-   
-::contentReference[oaicite:2]{index=2}
+    main()
+    print("程序结束时 - allocated:", torch.cuda.memory_allocated())
+    print("程序结束时 - reserved:", torch.cuda.memory_reserved())
  
