@@ -137,7 +137,7 @@ def main():
         num_train_epochs=3,
         save_strategy="epoch",
         save_total_limit=3,
-        evaluation_strategy="epoch",
+        eval_strategy="epoch",
         eval_steps=500,
         learning_rate=1e-4,
         save_on_each_node=True,
