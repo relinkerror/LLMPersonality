@@ -16,8 +16,6 @@ module load arrow/19
 source /project/6078835/gn533549/LLMPersonality/ENV/bin/activate
 pip install pyarrow --no-index
 pip install torch --no-index
-pip install --no-index torch deepspeed
-pip install ms-swift
 
 
 # 设置环境变量
@@ -39,11 +37,4 @@ elif [ $SLURM_ARRAY_TASK_ID -eq 2 ]; then
     OUTPUT_DIR="./models/Qwen_Neuroticism_high"
 fi
 
-# 运行 SWIFT 微调程序
-swift sft \
-    --model_type qwen \
-    --model_id_or_path $MODEL_DIR \
-    --sft_type lora \
-    --dataset $DATASET_PATH \
-    --output_dir $OUTPUT_DIR \
-    --deepspeed default-zero2
+python experiment/finetune.py --dataset_path $DATASET_PATH --model_dir $MODEL_DIR --output_dir $OUTPUT_DIR 
