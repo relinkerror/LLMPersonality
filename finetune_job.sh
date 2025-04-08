@@ -5,8 +5,8 @@
 #SBATCH --ntasks=1
 #SBATCH --time=24:00:00
 #SBATCH --mem=128G
-#SBATCH --cpus-per-task=v100l:1
-#SBATCH --gres=gpu:4
+#SBATCH --cpus-per-task=1
+#SBATCH --gres=gpu:v100:1
 #SBATCH --array=0-2
 
 # 加载必要模块
@@ -16,7 +16,6 @@ module load arrow/19
 source /project/6078835/gn533549/LLMPersonality/ENV/bin/activate
 pip install pyarrow --no-index
 pip install torch --no-index
-
 
 # 设置环境变量
 export TRANSFORMERS_NO_SAFE_TENSORS=1
@@ -37,4 +36,4 @@ elif [ $SLURM_ARRAY_TASK_ID -eq 2 ]; then
     OUTPUT_DIR="./models/Qwen_Neuroticism_high"
 fi
 
-python experiment/finetune.py --dataset_path $DATASET_PATH --model_dir $MODEL_DIR --output_dir $OUTPUT_DIR 
+python experiment/finetune.py --dataset_path $DATASET_PATH --model_dir $MODEL_DIR --output_dir $OUTPUT_DIR
