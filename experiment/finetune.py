@@ -83,28 +83,11 @@ def main():
     ds = Dataset.from_json(args.dataset_path)
     tokenizer = AutoTokenizer.from_pretrained(args.model_dir, use_fast=False, trust_remote_code=True)
     tokenizer.padding_side = 'right'
+    # 数据集预处理后：
     tokenized_dataset = ds.map(lambda ex: process_func(ex, tokenizer), remove_columns=ds.column_names)
+    # 设置格式，确保转换后的张量为整数类型
+    tokenized_dataset.set_format(type="torch", columns=["input_ids", "attention_mask", "labels"])
 
-    quantization_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_compute_dtype=torch.float16,
-        bnb_4bit_quant_type="nf4",
-    )
-    model = AutoModelForCausalLM.from_pretrained(
-        args.model_dir,
-        trust_remote_code=True,
-        torch_dtype=torch.half,
-        low_cpu_mem_usage=True,
-        quantization_config=quantization_config,
-        attn_implementation="sdpa",
-    )
-    print("模型加载后 - allocated:", torch.cuda.memory_allocated())
-    print("模型加载后 - reserved:", torch.cuda.memory_reserved())
-
-    model.generation_config = GenerationConfig.from_pretrained(args.model_dir)
-    model.generation_config.pad_token_id = model.generation_config.eos_token_id
-
-    model.enable_input_require_grads()
 
     lora_config = LoraConfig(
         task_type=TaskType.CAUSAL_LM,
@@ -114,8 +97,21 @@ def main():
         lora_alpha=32,
         lora_dropout=0.1
     )
+
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model_dir,
+        trust_remote_code=True,
+        torch_dtype=torch.half,
+        low_cpu_mem_usage=True,
+    )
+
+    # 关闭 use_cache 防止和梯度检查点冲突
+    model.config.use_cache = False
+
+    # 使用 LoRA 包装模型，目标是只微调 "q_proj" 和 "v_proj" 层
     model = get_peft_model(model, lora_config)
-    model.print_trainable_parameters()
+    model.print_trainable_parameters()  # 检查可训练参数
+
 
     training_args = TrainingArguments(
         output_dir=args.output_dir,
@@ -134,24 +130,17 @@ def main():
         args=training_args,
         train_dataset=tokenized_dataset,
         data_collator=DataCollatorForSeq2Seq(tokenizer=tokenizer, padding=True),
+        label_names=["labels"]
     )
 
     trainer.train()
-    print("训练结束后 - allocated:", torch.cuda.memory_allocated())
-    print("训练结束后 - reserved:", torch.cuda.memory_reserved())
 
     test_text = "你好！"
     inputs = tokenizer(f"User: {test_text}\n\n", return_tensors="pt")
     inputs = inputs.to(model.device)
-    print("生成前 - allocated:", torch.cuda.memory_allocated())
-    print("生成前 - reserved:", torch.cuda.memory_reserved())
-
     outputs = model.generate(**inputs, max_new_tokens=100)
-    print("生成后 - allocated:", torch.cuda.memory_allocated())
-    print("生成后 - reserved:", torch.cuda.memory_reserved())
 
     result = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    print("生成结果：", result)
 
     trainer.save_model(args.output_dir)
     tokenizer.save_pretrained(args.output_dir)

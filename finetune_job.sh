@@ -18,8 +18,9 @@ pip install pyarrow --no-index
 pip install torch --no-index
 
 # 设置环境变量
-export TRANSFORMERS_NO_SAFE_TENSORS=1
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+export TOKENIZERS_PARALLELISM=false
+
 
 # 根据 SLURM_ARRAY_TASK_ID 选择不同参数
 if [ $SLURM_ARRAY_TASK_ID -eq 0 ]; then
