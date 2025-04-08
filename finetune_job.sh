@@ -5,7 +5,7 @@
 #SBATCH --ntasks=1
 #SBATCH --time=24:00:00
 #SBATCH --mem=128G
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=v100l:1
 #SBATCH --gres=gpu:4
 #SBATCH --array=0-2
 
@@ -25,15 +25,15 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 # 根据 SLURM_ARRAY_TASK_ID 选择不同参数
 if [ $SLURM_ARRAY_TASK_ID -eq 0 ]; then
     DATASET_PATH="./datax/CPED/Extraversion_low.jsonl"
-    MODEL_DIR="./models/DeepSeek-R1-Distill-Qwen-32B"
+    MODEL_DIR="./models/DeepSeek-R1-Distill-Qwen-7B"
     OUTPUT_DIR="./models/Qwen_Extraversion_low"
 elif [ $SLURM_ARRAY_TASK_ID -eq 1 ]; then
     DATASET_PATH="./datax/CPED/Conscientiousness_high.jsonl"
-    MODEL_DIR="./models/DeepSeek-R1-Distill-Qwen-32B"
+    MODEL_DIR="./models/DeepSeek-R1-Distill-Qwen-7B"
     OUTPUT_DIR="./models/Qwen_Conscientiousness_high"
 elif [ $SLURM_ARRAY_TASK_ID -eq 2 ]; then
     DATASET_PATH="./datax/CPED/Neuroticism_high.jsonl"
-    MODEL_DIR="./models/DeepSeek-R1-Distill-Qwen-32B"
+    MODEL_DIR="./models/DeepSeek-R1-Distill-Qwen-7B"
     OUTPUT_DIR="./models/Qwen_Neuroticism_high"
 fi
 

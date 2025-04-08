@@ -1,5 +1,6 @@
 import argparse
 import gc
+import os
 import torch
 from datasets import Dataset
 from transformers import (
@@ -12,21 +13,6 @@ from transformers import (
     BitsAndBytesConfig
 )
 from peft import LoraConfig, TaskType, get_peft_model
-
-# 自定义 Trainer，确保计算 loss 时 labels 在 logits 同一设备上
-class CustomTrainer(Trainer):
-    def compute_loss(self, model, inputs, **kwargs):
-        # 提取 labels 并确保在与 logits 同一设备上
-        if "labels" in inputs:
-            labels = inputs["labels"]
-        else:
-            labels = None
-        outputs = model(**inputs)
-        logits = outputs.get("logits")
-        if labels is not None:
-            inputs["labels"] = labels.to(logits.device)
-        loss = outputs.loss
-        return loss
 
 def process_func(example, tokenizer, max_length=384):
     """
@@ -77,6 +63,9 @@ def process_func(example, tokenizer, max_length=384):
     }
 
 def main():
+    # 设置环境变量，指定使用的 GPU（例如，使用索引为 0 的 GPU）
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
     torch.cuda.empty_cache()
     gc.collect()
     print("程序开始时 - allocated:", torch.cuda.memory_allocated())
@@ -105,7 +94,6 @@ def main():
         args.model_dir,
         trust_remote_code=True,
         torch_dtype=torch.half,
-        device_map="auto",
         low_cpu_mem_usage=True,
         quantization_config=quantization_config,
         attn_implementation="sdpa",
@@ -131,24 +119,17 @@ def main():
 
     training_args = TrainingArguments(
         output_dir=args.output_dir,
-        per_device_train_batch_size=1,
-        gradient_accumulation_steps=1,
-        logging_steps=50,
+        per_device_train_batch_size=8,
+        gradient_accumulation_steps=2,
+        logging_steps=10,
         num_train_epochs=3,
-        save_strategy="epoch",
-        save_total_limit=3,
-        eval_strategy="epoch",
-        eval_steps=500,
-        learning_rate=1e-4,
-        save_on_each_node=True,
         gradient_checkpointing=True,
-        optim="paged_adamw_32bit",
-        load_best_model_at_end=True,
-        metric_for_best_model="eval_loss",
-        greater_is_better=False,
+        save_steps=100,
+        learning_rate=1e-4,
+        save_on_each_node=True
     )
 
-    trainer = CustomTrainer(
+    trainer = Trainer(
         model=model,
         args=training_args,
         train_dataset=tokenized_dataset,
@@ -179,4 +160,3 @@ if __name__ == "__main__":
     main()
     print("程序结束时 - allocated:", torch.cuda.memory_allocated())
     print("程序结束时 - reserved:", torch.cuda.memory_reserved())
- 
