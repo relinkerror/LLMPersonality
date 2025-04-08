@@ -155,23 +155,26 @@ import argparse
 
 # 用于处理数据集的函数
 def process_func(example, personality):
-    MAX_LENGTH = 384  # Llama分词器会将一个中文字切分为多个token，因此需要放开一些最大长度，保证数据的完整性
+    MAX_LENGTH = 384  # Llama 分词器会将一个中文字切分为多个 token，因此需要放宽最大长度以保证数据的完整性
+    # 当 CSV 不包含 'instruction' 列时，使用空字符串
+    user_text = example.get('instruction', '') + example['input']
     # 构造系统、用户输入的完整文本，插入 personality 参数
     instruction_text = "\n".join([
         "<|im_start|>system",
         f"现在你要扮演一个{personality}特质的人.",
         "<|im_end|>",
         "<|im_start|>user",
-        f"{example['instruction']}{example['input']}",
+        user_text,
         "<|im_end|>"
     ]).strip()
-    # token化系统-用户信息
+    
+    # token 化系统-用户信息
     instruction = tokenizer(instruction_text, add_special_tokens=False)
-    # token化助手回复部分
+    # token 化助手回复部分
     response = tokenizer(f"<|im_start|>assistant\n{example['output']}<|im_end|>\n", add_special_tokens=False)
     
     input_ids = instruction["input_ids"] + response["input_ids"] + [tokenizer.pad_token_id]
-    attention_mask = instruction["attention_mask"] + response["attention_mask"] + [1]  # 注意eos token也要关注，所以用1
+    attention_mask = instruction["attention_mask"] + response["attention_mask"] + [1]  # 注意 eos token 也要关注，所以用 1
     labels = [-100] * len(instruction["input_ids"]) + response["input_ids"] + [tokenizer.pad_token_id]
     
     # 截断到最大长度
@@ -185,6 +188,7 @@ def process_func(example, personality):
         "attention_mask": attention_mask,
         "labels": labels
     }
+
 
 # lora 配置参数
 config = LoraConfig(
