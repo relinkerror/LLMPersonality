@@ -24,17 +24,20 @@ export TOKENIZERS_PARALLELISM=false
 
 # 根据 SLURM_ARRAY_TASK_ID 选择不同参数
 if [ $SLURM_ARRAY_TASK_ID -eq 0 ]; then
-    DATASET_PATH="./datax/CPED/Extraversion_low.jsonl"
+    DATASET_PATH="./datax/CPED/extraversion_low_pairs.csv"
     MODEL_DIR="./models/DeepSeek-R1-Distill-Qwen-7B"
-    OUTPUT_DIR="./models/Qwen_Extraversion_low"
+    OUTPUT_DIR="./models/Qwen_7B_Extraversion_low"
+    personality="低外向性"
 elif [ $SLURM_ARRAY_TASK_ID -eq 1 ]; then
-    DATASET_PATH="./datax/CPED/Conscientiousness_high.jsonl"
+    DATASET_PATH="./datax/CPED/conscientiousness_high_pairs.csv"
     MODEL_DIR="./models/DeepSeek-R1-Distill-Qwen-7B"
-    OUTPUT_DIR="./models/Qwen_Conscientiousness_high"
+    OUTPUT_DIR="./models/Qwen_7B_Conscientiousness_high"
+    personality="高责任心"
 elif [ $SLURM_ARRAY_TASK_ID -eq 2 ]; then
-    DATASET_PATH="./datax/CPED/Neuroticism_high.jsonl"
+    DATASET_PATH="./datax/CPED/neuroticism_high_pairs.csv"
     MODEL_DIR="./models/DeepSeek-R1-Distill-Qwen-7B"
-    OUTPUT_DIR="./models/Qwen_Neuroticism_high"
+    OUTPUT_DIR="./models/Qwen_7B_Neuroticism_high"
+    personality="高神经质"
 fi
 
 python experiment/finetune.py --dataset_path $DATASET_PATH --model_dir $MODEL_DIR --output_dir $OUTPUT_DIR

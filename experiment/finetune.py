@@ -1,4 +1,4 @@
-import argparse
+'''import argparse
 import gc
 import os
 import torch
@@ -105,12 +105,8 @@ def main():
         low_cpu_mem_usage=True,
     )
 
-    # 关闭 use_cache 防止和梯度检查点冲突
-    model.config.use_cache = False
-
     # 使用 LoRA 包装模型，目标是只微调 "q_proj" 和 "v_proj" 层
     model = get_peft_model(model, lora_config)
-    model.print_trainable_parameters()  # 检查可训练参数
 
 
     training_args = TrainingArguments(
@@ -149,3 +145,120 @@ if __name__ == "__main__":
     main()
     print("程序结束时 - allocated:", torch.cuda.memory_allocated())
     print("程序结束时 - reserved:", torch.cuda.memory_reserved())
+'''
+from datasets import Dataset
+import pandas as pd
+from transformers import AutoTokenizer, AutoModelForCausalLM, DataCollatorForSeq2Seq, TrainingArguments, Trainer
+import torch
+from peft import LoraConfig, TaskType, get_peft_model
+import argparse
+
+# 用于处理数据集的函数
+def process_func(example, personality):
+    MAX_LENGTH = 384  # Llama分词器会将一个中文字切分为多个token，因此需要放开一些最大长度，保证数据的完整性
+    # 构造系统、用户输入的完整文本，插入 personality 参数
+    instruction_text = "\n".join([
+        "<|im_start|>system",
+        f"现在你要扮演一个{personality}特质的人.",
+        "<|im_end|>",
+        "<|im_start|>user",
+        f"{example['instruction']}{example['input']}",
+        "<|im_end|>"
+    ]).strip()
+    # token化系统-用户信息
+    instruction = tokenizer(instruction_text, add_special_tokens=False)
+    # token化助手回复部分
+    response = tokenizer(f"<|im_start|>assistant\n{example['output']}<|im_end|>\n", add_special_tokens=False)
+    
+    input_ids = instruction["input_ids"] + response["input_ids"] + [tokenizer.pad_token_id]
+    attention_mask = instruction["attention_mask"] + response["attention_mask"] + [1]  # 注意eos token也要关注，所以用1
+    labels = [-100] * len(instruction["input_ids"]) + response["input_ids"] + [tokenizer.pad_token_id]
+    
+    # 截断到最大长度
+    if len(input_ids) > MAX_LENGTH:
+        input_ids = input_ids[:MAX_LENGTH]
+        attention_mask = attention_mask[:MAX_LENGTH]
+        labels = labels[:MAX_LENGTH]
+        
+    return {
+        "input_ids": input_ids,
+        "attention_mask": attention_mask,
+        "labels": labels
+    }
+
+# lora 配置参数
+config = LoraConfig(
+    task_type=TaskType.CAUSAL_LM, 
+    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],  # 不同模型可能需要设置不同的参数，需要看模型中的attention层
+    inference_mode=False,  # 训练模式
+    r=8,  # Lora 秩
+    lora_alpha=32,  # Lora alpha，具体作用参见 Lora 原理
+    lora_dropout=0.1  # Dropout 比例
+)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="微调模型参数设置")
+    parser.add_argument("--dataset_path", type=str, required=True, help="CSV 数据集路径")
+    parser.add_argument("--model_dir", type=str, required=True, help="模型及分词器目录")
+    parser.add_argument("--output_dir", type=str, required=True, help="训练后保存模型的目录")
+    parser.add_argument("--personality", type=str, required=True, help="人格特质")
+    args = parser.parse_args()
+
+    # 读取 CSV 文件，CSV 文件应包含 'instruction', 'input', 'output' 三个列名
+    df = pd.read_csv(args.dataset_path)
+    ds = Dataset.from_pandas(df)
+    
+    # 加载 tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(args.model_dir, use_fast=False, trust_remote_code=True)
+    tokenizer.pad_token_id = tokenizer.eod_id  # 将eod_id设为pad_token_id
+
+    # 将数据集转换为 token 形式，并传入 personality 参数
+    tokenized_ds = ds.map(
+        process_func, 
+        fn_kwargs={"personality": args.personality},
+        remove_columns=ds.column_names
+    )
+
+    # 加载模型，以半精度形式加载
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model_dir, 
+        trust_remote_code=True, 
+        torch_dtype=torch.half, 
+        device_map="auto"
+    )
+    model.enable_input_require_grads()  # 开启梯度检查点时需要调用该方法
+    # 加载 LoRA 参数
+    model = get_peft_model(model, config)
+
+    # 设置训练参数
+    trainer_args = TrainingArguments(
+        output_dir=args.output_dir,
+        per_device_train_batch_size=8,
+        gradient_accumulation_steps=2,
+        logging_steps=10,
+        num_train_epochs=3,
+        gradient_checkpointing=True,
+        save_steps=100,
+        learning_rate=1e-4,
+        save_on_each_node=True
+    )
+    
+    # 实例化 Trainer
+    trainer = Trainer(
+        model=model,
+        args=trainer_args,
+        train_dataset=tokenized_ds,
+        data_collator=DataCollatorForSeq2Seq(tokenizer=tokenizer, padding=True),
+    )
+    
+    # 开始训练
+    trainer.train()
+    
+    # 测试 chat 模式，此处将 personality 传入 system 参数中
+    response, history = model.chat(
+        tokenizer, 
+        "你是谁", 
+        history=[], 
+        system=f"现在你要扮演一个{args.personality}特质的人"
+    )
+    print(response)
