@@ -129,9 +129,9 @@ def main():
         model=model,
         args=training_args,
         train_dataset=tokenized_dataset,
-        data_collator=DataCollatorForSeq2Seq(tokenizer=tokenizer, padding=True),
-        label_names=["labels"]
+        data_collator=DataCollatorForSeq2Seq(tokenizer=tokenizer, padding=True)
     )
+
 
     trainer.train()
 
