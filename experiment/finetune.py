@@ -210,7 +210,7 @@ if __name__ == "__main__":
     
     # 加载 tokenizer
     tokenizer = AutoTokenizer.from_pretrained(args.model_dir, use_fast=False, trust_remote_code=True)
-    tokenizer.pad_token_id = tokenizer.eod_id  # 将eod_id设为pad_token_id
+    tokenizer.pad_token_id = tokenizer.eos_token_id  # 将eos_token_id设为pad_token_id
 
     # 将数据集转换为 token 形式，并传入 personality 参数
     tokenized_ds = ds.map(
