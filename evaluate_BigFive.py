@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import aiohttp
 import asyncio
 
-'''class EvaluateBigFive:
+class EvaluateBigFive:
     def __init__(self, tokenizer, model, num_rounds=10, system_prompt=""):
         """
         初始化评估类
@@ -71,8 +71,9 @@ if __name__ == "__main__":
     tokenizer, model = load_model(args.model_path, adapter_path=args.adapter_path)
     evaluator = EvaluateBigFive(tokenizer, model, num_rounds=args.num_rounds, system_prompt=args.system_prompt)
     results = evaluator.evaluate()
-    evaluator.plot_results(results,"deepseek-llm-7b-chat/",args.system_prompt)'''
-class EvaluateBigFive:
+    evaluator.plot_results(results,"deepseek-llm-7b-chat/",args.system_prompt)
+
+'''class EvaluateBigFive:
     def __init__(self, client, num_rounds=20, system_prompt=""):
         """
         参数:
@@ -84,8 +85,9 @@ class EvaluateBigFive:
         self.evaluator = QuestionnaireEvaluator(client)
         self.num_rounds = num_rounds
         self.system_prompt = system_prompt
+'''
 
-    '''def evaluate(self):
+'''def evaluate(self):
         """
         针对每个问卷维度执行多轮评估，返回字典，键为维度，值包含各轮得分列表及平均分
         """
@@ -105,8 +107,9 @@ class EvaluateBigFive:
             all_results[dimension] = {"metrics": metrics, "average_metric": average_metric}
             print(f"{dimension.capitalize()} average metric: {average_metric}\n")
         return all_results'''
+
     
-    async def evaluate(self):
+'''async def evaluate(self):
         all_results = {}
         for dimension, config in QUESTIONNAIRE_CONFIG.items():
             print(f"Processing dimension: {dimension}")
@@ -134,5 +137,5 @@ class EvaluateBigFive:
             average_metric = sum(metrics) / len(metrics)
             all_results[dimension] = {"metrics": metrics, "average_metric": average_metric}
             print(f"{dimension.capitalize()} average metric: {average_metric}\n")
-        return all_results
+        return all_results'''
 

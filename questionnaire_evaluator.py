@@ -4,7 +4,7 @@ import torch
 import aiohttp
 import asyncio
 
-'''class QuestionnaireEvaluator:
+class QuestionnaireEvaluator:
     def __init__(self, tokenizer, model):
         self.tokenizer = tokenizer
         self.model = model
@@ -74,8 +74,8 @@ def simple_metric(predictions: list, reversed_indices: list, fixed_n: int) -> fl
 
     average_score = total_score / fixed_n
     normalized_metric = average_score / 5
-    return normalized_metric'''
-class QuestionnaireEvaluator:
+    return normalized_metric
+'''class QuestionnaireEvaluator:
     def __init__(self, client, max_concurrency=479):
         self.client = client
         self.semaphore = asyncio.Semaphore(max_concurrency)
@@ -137,4 +137,4 @@ def simple_metric(predictions: list, reversed_indices: list, fixed_n: int) -> fl
 
     average_score = total_score / fixed_n
     normalized_metric = average_score / 5
-    return normalized_metric
+    return normalized_metric'''
