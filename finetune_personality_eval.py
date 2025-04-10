@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from model_loader import load_model
 from evaluate_BigFive import EvaluateBigFive
+import gc
+import torch
 
 def plot_personality_boxplot(model_label, evaluation_result, output_dir):
     """
@@ -68,6 +70,12 @@ def main():
     result = evaluator.evaluate()
     evaluation_results.append(("Base", result))
 
+    # 在评估完当前模型后清理内存
+    del model
+    del tokenizer
+    gc.collect()
+    torch.cuda.empty_cache()
+
     # 2. Evaluate each fine-tuned model using its corresponding LoRA adapter
     for adapter_path in args.adapter_paths:
         print(f"===== Evaluating Fine-tuned Model, Adapter Path: {adapter_path} =====")
@@ -77,6 +85,11 @@ def main():
         # Use the last directory name of the adapter path as the model label
         model_label = os.path.basename(adapter_path.rstrip("/"))
         evaluation_results.append((model_label, result))
+        # 在评估完当前模型后清理内存
+        del model
+        del tokenizer
+        gc.collect()
+        torch.cuda.empty_cache()
 
     # 3. Plot the evaluation results for each model as a box plot (showing all five personality traits)
     for label, res in evaluation_results:
