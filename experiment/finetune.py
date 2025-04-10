@@ -155,29 +155,31 @@ import argparse
 
 # 用于处理数据集的函数
 def process_func(example, personality):
-    MAX_LENGTH = 384  # Llama 分词器会将一个中文字切分为多个 token，因此需要放宽最大长度以保证数据的完整性
-    # 当 CSV 不包含 'instruction' 列时，使用空字符串
+    MAX_LENGTH = 384  # 根据 Llama 分词器的特点设置最大 token 数
+    
+    # 如果 CSV 中没有 'instruction' 列则使用空字符串
     user_text = example.get('instruction', '') + example['input']
-    # 构造系统、用户输入的完整文本，插入 personality 参数
-    instruction_text = "\n".join([
-        "<|im_start|>system",
-        f"现在你要扮演一个{personality}特质的人.",
-        "<|im_end|>",
-        "<|im_start|>user",
-        user_text,
-        "<|im_end|>"
-    ]).strip()
     
-    # token 化系统-用户信息
+    # 构造系统与用户输入部分，此处移除了原有的特殊前后缀标记
+    # 修改为简洁文本格式，例如："系统：现在你要扮演一个{personality}特质的人。\n用户：{user_text}"
+    instruction_text = f"User: 现在你要扮演一个{personality}特质的人。\n请根据情景回答：{user_text}"
+    
+    # 构造助手回复部分，同样去掉特殊标记
+    response_text = f"{example['output']}"
+    
+    # 使用 tokenizer 进行 tokenization（这里请确保全局变量 tokenizer 已经定义）
     instruction = tokenizer(instruction_text, add_special_tokens=False)
-    # token 化助手回复部分
-    response = tokenizer(f"<|im_start|>assistant\n{example['output']}<|im_end|>\n", add_special_tokens=False)
+    response = tokenizer(response_text, add_special_tokens=False)
     
+    # 拼接输入与回复，并添加一个 pad_token_id 作为结束标识
     input_ids = instruction["input_ids"] + response["input_ids"] + [tokenizer.pad_token_id]
-    attention_mask = instruction["attention_mask"] + response["attention_mask"] + [1]  # 注意 eos token 也要关注，所以用 1
+    # 注意力 mask 同理；此处我们将 pad token 的 attention mask 设为 1（或者可根据需要设为 0）
+    attention_mask = instruction["attention_mask"] + response["attention_mask"] + [1]
+    # 为了在计算损失时不对前面的部分进行计算，设置 instruction 部分的 label 为 -100，
+    # 只让模型学习 response 部分，即将 instruction 部分 label 填充为 -100
     labels = [-100] * len(instruction["input_ids"]) + response["input_ids"] + [tokenizer.pad_token_id]
     
-    # 截断到最大长度
+    # 如果总长度超过 MAX_LENGTH，则截断
     if len(input_ids) > MAX_LENGTH:
         input_ids = input_ids[:MAX_LENGTH]
         attention_mask = attention_mask[:MAX_LENGTH]
@@ -190,14 +192,15 @@ def process_func(example, personality):
     }
 
 
+
 # lora 配置参数
 config = LoraConfig(
     task_type=TaskType.CAUSAL_LM, 
-    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],  # 不同模型可能需要设置不同的参数，需要看模型中的attention层
+    target_modules=["q_proj", "v_proj"],  # 不同模型可能需要设置不同的参数，需要看模型中的attention层
     inference_mode=False,  # 训练模式
     r=8,  # Lora 秩
-    lora_alpha=32,  # Lora alpha，具体作用参见 Lora 原理
-    lora_dropout=0.1  # Dropout 比例
+    lora_alpha=16,  # Lora alpha，具体作用参见 Lora 原理
+    lora_dropout=0.2  # Dropout 比例
 )
 
 if __name__ == "__main__":
@@ -240,10 +243,10 @@ if __name__ == "__main__":
         per_device_train_batch_size=8,
         gradient_accumulation_steps=2,
         logging_steps=10,
-        num_train_epochs=3,
+        num_train_epochs=1,
         gradient_checkpointing=True,
-        save_steps=100,
-        learning_rate=1e-4,
+        save_steps=1000,
+        learning_rate=1e-5,
         save_on_each_node=True
     )
     
@@ -257,12 +260,3 @@ if __name__ == "__main__":
     
     # 开始训练
     trainer.train()
-    
-    # 测试 chat 模式，此处将 personality 传入 system 参数中
-    response, history = model.chat(
-        tokenizer, 
-        "你是谁", 
-        history=[], 
-        system=f"现在你要扮演一个{args.personality}特质的人"
-    )
-    print(response)
