@@ -20,6 +20,7 @@ pip install torch --no-index
 # 设置环境变量
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export TOKENIZERS_PARALLELISM=false
+export CUDA_LAUNCH_BLOCKING=1
 
 
 # 根据 SLURM_ARRAY_TASK_ID 选择不同参数
