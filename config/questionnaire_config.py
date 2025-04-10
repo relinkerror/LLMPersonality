@@ -3,7 +3,7 @@
 QUESTIONNAIRE_CONFIG = {
     "neuroticism": {
         "standardize": (
-            "Please rate the accuracy of each statement according to your description using a score between 1 and 5. Output exactly one digit—either 1, 2, 3, 4, or 5—with no additional characters or explanations. For example, if a statement is completely accurate, respond with '5'; if it is somewhat accurate, respond with '3'."
+            "***Please read the following statement and provide your evaluation based on the requirements below:*** 1.Use only a single digit rating (1 to 5, where 1 means extremely inaccurate and 5 means very accurate). 2.Output only the digit with no additional text, explanations, or chain-of-thought."
         ),
         "inputs": [
             "Worry about things.",
@@ -35,7 +35,7 @@ QUESTIONNAIRE_CONFIG = {
     },
     "extraversion": {
         "standardize": (
-            "Please rate the accuracy of each statement according to your description using a score between 1 and 5. Output exactly one digit—either 1, 2, 3, 4, or 5—with no additional characters or explanations. For example, if a statement is completely accurate, respond with '5'; if it is somewhat accurate, respond with '3'."
+            "***Please read the following statement and provide your evaluation based on the requirements below:*** 1.Use only a single digit rating (1 to 5, where 1 means extremely inaccurate and 5 means very accurate). 2.Output only the digit with no additional text, explanations, or chain-of-thought."
         ),
         "inputs": [
             "Make friends easily.",
@@ -67,7 +67,7 @@ QUESTIONNAIRE_CONFIG = {
     },
     "openness": {
         "standardize": (
-            "Please rate the accuracy of each statement according to your description using a score between 1 and 5. Output exactly one digit—either 1, 2, 3, 4, or 5—with no additional characters or explanations. For example, if a statement is completely accurate, respond with '5'; if it is somewhat accurate, respond with '3'."
+            "***Please read the following statement and provide your evaluation based on the requirements below:*** 1.Use only a single digit rating (1 to 5, where 1 means extremely inaccurate and 5 means very accurate). 2.Output only the digit with no additional text, explanations, or chain-of-thought."
         ),
         "inputs": [
             "Have a vivid imagination.",
@@ -99,7 +99,7 @@ QUESTIONNAIRE_CONFIG = {
     },
     "agreeableness": {
         "standardize": (
-            "Please rate the accuracy of each statement according to your description using a score between 1 and 5. Output exactly one digit—either 1, 2, 3, 4, or 5—with no additional characters or explanations. For example, if a statement is completely accurate, respond with '5'; if it is somewhat accurate, respond with '3'."
+            "***Please read the following statement and provide your evaluation based on the requirements below:*** 1.Use only a single digit rating (1 to 5, where 1 means extremely inaccurate and 5 means very accurate). 2.Output only the digit with no additional text, explanations, or chain-of-thought."
         ),
         "inputs": [
             "Trust others.",
@@ -131,7 +131,7 @@ QUESTIONNAIRE_CONFIG = {
     },
     "conscientiousness": {
         "standardize": (
-            "Please rate the accuracy of each statement according to your description using a score between 1 and 5. Output exactly one digit—either 1, 2, 3, 4, or 5—with no additional characters or explanations. For example, if a statement is completely accurate, respond with '5'; if it is somewhat accurate, respond with '3'."
+            "***Please read the following statement and provide your evaluation based on the requirements below:*** 1.Use only a single digit rating (1 to 5, where 1 means extremely inaccurate and 5 means very accurate). 2.Output only the digit with no additional text, explanations, or chain-of-thought."
         ),
         "inputs": [
             "Complete tasks successfully.",

@@ -47,8 +47,8 @@ def main():
     parser = argparse.ArgumentParser(
         description="Evaluate the Big Five personality questionnaire using LoRA fine-tuned models, comparing the base model with multiple fine-tuned models."
     )
-    parser.add_argument("--model_path", type=str, default="./models/deepseek-llm-7b-chat/",
-                        help="Path to the base model, e.g., './models/deepseek-llm-7b-chat/'")
+    parser.add_argument("--model_path", type=str, default="./models/DeepSeek-R1-Distill-Qwen-7B/",
+                        help="Path to the base model, e.g., './models/DeepSeek-R1-Distill-Qwen-7B/'")
     parser.add_argument("--adapter_paths", type=str, nargs="+", default=[],
                         help="Paths to multiple LoRA adapters (fine-tuned models), e.g., './adapters/model1/', './adapters/model2/'")
     parser.add_argument("--num_rounds", type=int, default=2, help="Number of evaluation rounds")
@@ -57,7 +57,7 @@ def main():
     args = parser.parse_args()
 
     # Use a unified system prompt for all evaluations
-    system_prompt = "Please answer the Big Five personality questionnaire."
+    system_prompt = "***You are participating in a survey. Please answer the following questions honestly.*** " 
 
     evaluation_results = []
 

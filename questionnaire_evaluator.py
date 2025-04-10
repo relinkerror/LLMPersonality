@@ -27,11 +27,36 @@ class QuestionnaireEvaluator:
                     pad_token_id=self.tokenizer.eos_token_id,
                 )
             raw_answer = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-            answer_text = raw_answer.split("Assistant:")[-1].strip()
-            if re.fullmatch(r'[1-5]', answer_text):
-                valid_answer = int(answer_text)
+            print(f"Raw answer: {raw_answer}")
+            
+            # 如果存在链式思考部分，则仅取</think>之后的文本进行处理
+            if "</think>" in raw_answer:
+                relevant_text = raw_answer.split("</think>")[-1]
             else:
-                attempt += 1
+                relevant_text = raw_answer
+
+            # 按行查找，逆序选择最后一行中只含单个数字的候选答案
+            lines = relevant_text.splitlines()
+            candidate = None
+            for line in reversed(lines):
+                line_stripped = line.strip()
+                if re.fullmatch(r'[1-5]', line_stripped):
+                    candidate = line_stripped
+                    break
+
+            if candidate:
+                valid_answer = int(candidate)
+            else:
+                # 如果按行提取未果，再使用正则在整个相关文本中查找最后一个符合条件的数字
+                matches = re.findall(r'\b([1-5])\b', relevant_text)
+                if matches:
+                    # 这里选择最后一个匹配项，确保尽可能提取最终的答案数字
+                    valid_answer = int(matches[-1])
+                else:
+                    attempt += 1
+            
+            print(f"Answer :{valid_answer}")
+
         return valid_answer if valid_answer is not None else 3
 
     def generate_answers(self, standardize: str, inputs: list, system_prompt: str = "") -> list:
@@ -48,7 +73,7 @@ class QuestionnaireEvaluator:
         answers = []
         for inp in inputs:
             prompt = (
-                f"System: {full_system_prompt}\n"
+                f"User: {full_system_prompt}\n"
                 f"Human: {inp}\n\nAssistant:"
             )
             answer = self.generate_answer_for_input(prompt)
