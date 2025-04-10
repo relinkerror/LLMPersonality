@@ -1,0 +1,4 @@
+slurmstepd: error: *** JOB 58411278 ON cdr2621 CANCELLED AT 2025-04-09T19:22:41 ***
+slurmstepd: error: Container 780207 in cgroup plugin has 6 processes, giving up after 607 sec
+slurmstepd: error: step_terminate_monitor: /opt/software/sbin/slurm_unkillablestepprogram.sh still running after 300 seconds.  Killing.
+slurmstepd: error: *** JOB 58411278 STEPD TERMINATED ON cdr2621 AT 2025-04-09T19:32:41 DUE TO JOB NOT ENDING WITH SIGNALS ***
