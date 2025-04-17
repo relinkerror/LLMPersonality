@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from model_loader import load_model
 from evaluate_BigFive import EvaluateBigFive
-import openai
-import aiohttp
-import asyncio
+#import openai
+#import aiohttp
+#import asyncio
 
 def extract_variant_and_personality(system_prompt):
     """
