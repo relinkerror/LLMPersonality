@@ -16,4 +16,4 @@ source /project/6078835/gn533549/LLMPersonality/ENV/bin/activate
 pip install pyarrow --no-index
 pip install torch --no-index
 
-python prompt_personality_eval.py --model_path ./models/QwQ-32B/ --num_rounds 20
+python prompt_personality_eval.py --model_path ./models/Qwen2.5-32B-Instruct/ --num_rounds 20
