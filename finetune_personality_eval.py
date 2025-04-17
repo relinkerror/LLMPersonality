@@ -63,7 +63,7 @@ def main():
 
     evaluation_results = []
 
-    '''# 1. Evaluate the base model (no adapter) and label it as "Base"
+    # 1. Evaluate the base model (no adapter) and label it as "Base"
     print("===== Evaluating Base Model (No Fine-tuning) =====")
     tokenizer, model = load_model(args.model_path, adapter_path=None)
     evaluator = EvaluateBigFive(tokenizer, model, num_rounds=args.num_rounds, system_prompt=system_prompt)
@@ -74,7 +74,7 @@ def main():
     del model
     del tokenizer
     gc.collect()
-    torch.cuda.empty_cache()'''
+    torch.cuda.empty_cache()
 
     # 2. Evaluate each fine-tuned model using its corresponding LoRA adapter
     for adapter_path in args.adapter_paths:

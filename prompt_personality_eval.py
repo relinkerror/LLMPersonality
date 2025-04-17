@@ -87,6 +87,7 @@ def plot_grouped_results(evaluation_data, output_dir="plot"):
             palette=palette,
             showmeans=True,
             meanline=True,
+            meanprops={"linestyle": "--", "linewidth": 2, "color": "red"},
             width=0.5
         )
         # 叠加散点图，显示每个数据点位置
@@ -118,35 +119,35 @@ def main():
     parser = argparse.ArgumentParser(
         description="Batch Evaluate Big Five Personality Questionnaire with different append_str"
     )
-    parser.add_argument("--model_path", type=str, default="./models/DeepSeek-R1-Distill-Qwen-7B/",
+    parser.add_argument("--model_path", type=str, default="./models/Qwen2.5-7B-Instruct/",
                         help="模型路径，例如 './models/DeepSeek-R1-Distill-Qwen-7B/'")
     parser.add_argument("--adapter_path", type=str, default=None,
                         help="适配器权重目录路径，例如 'DeepSeek-R1-Distill-Qwen-7B/'，目录中应包含 adapter_config.json 和 adapter_model.bin")
-    parser.add_argument("--num_rounds", type=int, default=2,
+    parser.add_argument("--num_rounds", type=int, default=20,
                         help="测试轮数")
     args = parser.parse_args()
 
     # 定义你要测试的系统提示列表
     system_prompt_list = [
-        " Please play someone with low neuroticism, answer the following questions. ",
-        " Please play someone with moderate neuroticism, answer the following questions. ",
-        " Please play someone with high neuroticism, answer the following questions. ",
+        " Please play someone with low neuroticism ",
+        " Please play someone with moderate neuroticism ",
+        " Please play someone with high neuroticism ",
 
-        " Please play someone with low extroversion, answer the following questions. ",
-        " Please play someone with moderate extroversion, answer the following questions. ",
-        " Please play someone with high extroversion, answer the following questions. ",
+        " Please play someone with low extraversion ",
+        " Please play someone with moderate extraversion ",
+        " Please play someone with high extraversion ",
 
-        " Please play someone with low openness, answer the following questions. ",
-        " Please play someone with moderate openness, answer the following questions. ",
-        " Please play someone with high openness, answer the following questions. ",
+        " Please play someone with low openness ",
+        " Please play someone with moderate openness ",
+        " Please play someone with high openness ",
 
-        " Please play someone with low agreeableness, answer the following questions. ",
-        " Please play someone with moderate agreeableness, answer the following questions. ",
-        " Please play someone with high agreeableness, answer the following questions. ",
+        " Please play someone with low agreeableness ",
+        " Please play someone with moderate agreeableness ",
+        " Please play someone with high agreeableness ",
 
-        " Please play someone with low conscientiousness, answer the following questions. ",
-        " Please play someone with moderate conscientiousness, answer the following questions. ",
-        " Please play someone with high conscientiousness, answer the following questions. ",
+        " Please play someone with low conscientiousness ",
+        " Please play someone with moderate conscientiousness ",
+        " Please play someone with high conscientiousness ",
     ]
 
     # 加载模型和分词器
@@ -160,6 +161,9 @@ def main():
         evaluator = EvaluateBigFive(tokenizer, model, num_rounds=args.num_rounds, system_prompt=prompt)
         results = evaluator.evaluate()
         evaluation_data.append((prompt, results))
+
+    print("===== Evaluation completed =====")
+    print(evaluation_data)
     
     # 将相同人格类型下的评估结果绘制在一起
     plot_grouped_results(evaluation_data, output_dir="plot")

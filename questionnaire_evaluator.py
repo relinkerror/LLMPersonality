@@ -9,7 +9,7 @@ class QuestionnaireEvaluator:
         self.tokenizer = tokenizer
         self.model = model
 
-    def generate_answer_for_input(self, prompt: str, max_new_tokens: int = 256, max_attempts: int = 5) -> int:
+    def generate_answer_for_input(self, text: str, max_new_tokens: int = 256, max_attempts: int = 5) -> int:
         """
         根据给定 prompt 生成答案，返回 1-5 之间的整数。
         多次尝试后仍未生成有效答案，则返回 3。
@@ -17,16 +17,17 @@ class QuestionnaireEvaluator:
         valid_answer = None
         attempt = 0
         while attempt < max_attempts and valid_answer is None:
-            inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
-            with torch.no_grad():
-                outputs = self.model.generate(
-                    **inputs,
-                    max_new_tokens=max_new_tokens,
-                    temperature=0.7,
-                    do_sample=True,
-                    pad_token_id=self.tokenizer.eos_token_id,
-                )
-            raw_answer = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+            inputs = self.tokenizer([text], return_tensors="pt").to(self.model.device)
+            generated_ids = self.model.generate(
+                **inputs,
+                max_new_tokens=512
+            )
+
+            generated_ids = [
+                output_ids[len(input_ids):] for input_ids, output_ids in zip(inputs.input_ids, generated_ids)
+            ]
+
+            raw_answer = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
             print(f"Raw answer: {raw_answer}")
             
             # 如果存在链式思考部分，则仅取</think>之后的文本进行处理
@@ -72,11 +73,22 @@ class QuestionnaireEvaluator:
         full_system_prompt = system_prompt + standardize
         answers = []
         for inp in inputs:
-            prompt = (
+            '''prompt = (
                 f"User: {full_system_prompt}\n"
                 f"Human: {inp}\n\nAssistant:"
+            )'''
+
+            messages = [
+                {"role": "system", "content": full_system_prompt},
+                {"role": "user", "content": inp }
+            ]
+
+            text = self.tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=True
             )
-            answer = self.generate_answer_for_input(prompt)
+            answer = self.generate_answer_for_input(text)
             answers.append(answer)
         return answers
 
