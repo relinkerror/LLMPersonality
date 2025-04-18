@@ -153,43 +153,60 @@ import torch
 from peft import LoraConfig, TaskType, get_peft_model
 import argparse
 
-# 用于处理数据集的函数
-def process_func(example, personality):
-    MAX_LENGTH = 384  # 根据 Llama 分词器的特点设置最大 token 数
-    
-    # 如果 CSV 中没有 'instruction' 列则使用空字符串
-    user_text = example.get('instruction', '') + example['input']
-    
-    # 构造系统与用户输入部分，此处移除了原有的特殊前后缀标记
-    # 修改为简洁文本格式，例如："系统：现在你要扮演一个{personality}特质的人。\n用户：{user_text}"
-    instruction_text = f"User: 现在你要扮演一个{personality}特质的人。\n请根据情景回答：{user_text}"
-    
-    # 构造助手回复部分，同样去掉特殊标记
-    response_text = f"{example['output']}"
-    
-    # 使用 tokenizer 进行 tokenization（这里请确保全局变量 tokenizer 已经定义）
-    instruction = tokenizer(instruction_text, add_special_tokens=False)
-    response = tokenizer(response_text, add_special_tokens=False)
-    
-    # 拼接输入与回复，并添加一个 pad_token_id 作为结束标识
-    input_ids = instruction["input_ids"] + response["input_ids"] + [tokenizer.pad_token_id]
-    # 注意力 mask 同理；此处我们将 pad token 的 attention mask 设为 1（或者可根据需要设为 0）
-    attention_mask = instruction["attention_mask"] + response["attention_mask"] + [1]
-    # 为了在计算损失时不对前面的部分进行计算，设置 instruction 部分的 label 为 -100，
-    # 只让模型学习 response 部分，即将 instruction 部分 label 填充为 -100
-    labels = [-100] * len(instruction["input_ids"]) + response["input_ids"] + [tokenizer.pad_token_id]
-    
-    # 如果总长度超过 MAX_LENGTH，则截断
-    if len(input_ids) > MAX_LENGTH:
-        input_ids = input_ids[:MAX_LENGTH]
-        attention_mask = attention_mask[:MAX_LENGTH]
-        labels = labels[:MAX_LENGTH]
-        
+def process_func(examples: dict[str, list[any]]) -> dict[str, list[any]]:
+    input_ids_batch, attention_mask_batch, labels_batch = [], [], []
+
+    for messages in examples["messages"]:
+        # 拆分历史对话与回复
+        prompt_messages, reply = messages[:-1], messages[-1]["content"]
+
+        # 构造 prompt 串（不做编码）
+        prompt_str = tokenizer.apply_chat_template(
+            prompt_messages,
+            tokenize=False,
+            add_generation_prompt=True
+        )
+
+        # 拼接完整生成序列
+        full_str = prompt_str + reply + tokenizer.eos_token
+
+        # 使用同一配置编码完整序列
+        tokenized_full = tokenizer(
+            full_str,
+            truncation=True,
+            max_length=512,
+            padding="max_length"
+        )
+        ids  = tokenized_full["input_ids"]
+        mask = tokenized_full["attention_mask"]
+
+        # 用相同配置编码 prompt，准确计算长度
+        prompt_ids = tokenizer(
+            prompt_str,
+            truncation=True,
+            max_length=512,
+            padding="max_length"
+        )["input_ids"]
+        prompt_len = len(prompt_ids)
+
+        # 构造 labels：前 prompt_len 个置 -100，后续保留真实 id
+        labels = ids.copy()
+        labels[:prompt_len] = [-100] * prompt_len
+
+        # 聚合到 batch 列表
+        input_ids_batch.append(ids)
+        attention_mask_batch.append(mask)
+        labels_batch.append(labels)
+
     return {
-        "input_ids": input_ids,
-        "attention_mask": attention_mask,
-        "labels": labels
+        "input_ids":      input_ids_batch,
+        "attention_mask": attention_mask_batch,
+        "labels":         labels_batch,
     }
+
+# 应用方式：
+# ds = ds.map(process_func, batched=True, remove_columns=["messages"])
+
 
 
 
@@ -208,11 +225,11 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_path", type=str, required=True, help="CSV 数据集路径")
     parser.add_argument("--model_dir", type=str, required=True, help="模型及分词器目录")
     parser.add_argument("--output_dir", type=str, required=True, help="训练后保存模型的目录")
-    parser.add_argument("--personality", type=str, required=True, help="人格特质")
+    #parser.add_argument("--personality", type=str, required=True, help="人格特质")
     args = parser.parse_args()
 
-    # 读取 CSV 文件，CSV 文件应包含 'instruction', 'input', 'output' 三个列名
-    df = pd.read_csv(args.dataset_path)
+    
+    df = pd.read_json(args.dataset_path, lines=True, orient='records')
     ds = Dataset.from_pandas(df)
     
     # 加载 tokenizer
@@ -220,11 +237,7 @@ if __name__ == "__main__":
     tokenizer.pad_token_id = tokenizer.eos_token_id  # 将eos_token_id设为pad_token_id
 
     # 将数据集转换为 token 形式，并传入 personality 参数
-    tokenized_ds = ds.map(
-        process_func, 
-        fn_kwargs={"personality": args.personality},
-        remove_columns=ds.column_names
-    )
+    tokenized_ds = ds = ds.map(process_func, batched=True, remove_columns=["messages"])
 
     # 加载模型，以半精度形式加载
     model = AutoModelForCausalLM.from_pretrained(
