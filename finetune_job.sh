@@ -6,7 +6,7 @@
 #SBATCH --time=24:00:00
 #SBATCH --mem=128G
 #SBATCH --cpus-per-task=1
-#SBATCH --gpus-per-node=2
+#SBATCH --gpus-per-node=v100l:1
 #SBATCH --array=0-2
 
 # 加载必要模块
