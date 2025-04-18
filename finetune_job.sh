@@ -41,5 +41,5 @@ fi
 python experiment/finetune.py \
     --dataset_path "$DATASET_PATH" \
     --model_dir "$MODEL_DIR" \
-    --output_dir "$OUTPUT_DIR" \ 
+    --output_dir "$OUTPUT_DIR"
 
