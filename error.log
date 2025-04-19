@@ -1,2 +1,25 @@
 Sliding Window Attention is enabled but not implemented for `sdpa`; unexpected results may be encountered.
-Loading checkpoint shards:   0%|          | 0/17 [00:00<?, ?it/s]Loading checkpoint shards:   6%|▌         | 1/17 [00:21<05:38, 21.15s/it]Loading checkpoint shards:  12%|█▏        | 2/17 [00:48<06:14, 24.99s/it]Loading checkpoint shards:  18%|█▊        | 3/17 [01:20<06:33, 28.09s/it]Loading checkpoint shards:  24%|██▎       | 4/17 [02:29<09:34, 44.16s/it]Loading checkpoint shards:  29%|██▉       | 5/17 [03:10<08:36, 43.03s/it]Loading checkpoint shards:  35%|███▌      | 6/17 [03:52<07:50, 42.81s/it]Loading checkpoint shards:  41%|████      | 7/17 [04:57<08:20, 50.08s/it]Loading checkpoint shards:  47%|████▋     | 8/17 [05:41<07:11, 47.99s/it]Loading checkpoint shards:  53%|█████▎    | 9/17 [06:30<06:25, 48.21s/it]Loading checkpoint shards:  59%|█████▉    | 10/17 [07:05<05:09, 44.22s/it]Loading checkpoint shards:  65%|██████▍   | 11/17 [07:35<03:59, 39.84s/it]Loading checkpoint shards:  71%|███████   | 12/17 [08:15<03:19, 39.86s/it]Loading checkpoint shards:  76%|███████▋  | 13/17 [08:36<02:16, 34.16s/it]Loading checkpoint shards:  82%|████████▏ | 14/17 [08:54<01:28, 29.51s/it]Loading checkpoint shards:  88%|████████▊ | 15/17 [09:15<00:53, 26.75s/it]Loading checkpoint shards:  94%|█████████▍| 16/17 [09:59<00:31, 31.90s/it]Loading checkpoint shards: 100%|██████████| 17/17 [10:14<00:00, 26.93s/it]Loading checkpoint shards: 100%|██████████| 17/17 [10:14<00:00, 36.15s/it]
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:11<00:35, 11.99s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:20<00:19,  9.91s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:29<00:09,  9.40s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:34<00:00,  7.71s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:34<00:00,  8.59s/it]
+Traceback (most recent call last):
+  File "/project/6078835/gn533549/LLMPersonality/LLMPersonality/finetune_personality_eval.py", line 99, in <module>
+    main()
+  File "/project/6078835/gn533549/LLMPersonality/LLMPersonality/finetune_personality_eval.py", line 82, in main
+    tokenizer, model = load_model(args.model_path, adapter_path=adapter_path)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/project/6078835/gn533549/LLMPersonality/LLMPersonality/model_loader.py", line 21, in load_model
+    model = AutoModelForCausalLM.from_pretrained(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/project/6078835/gn533549/LLMPersonality/ENV/lib/python3.12/site-packages/transformers/models/auto/auto_factory.py", line 571, in from_pretrained
+    return model_class.from_pretrained(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/project/6078835/gn533549/LLMPersonality/ENV/lib/python3.12/site-packages/transformers/modeling_utils.py", line 279, in _wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/project/6078835/gn533549/LLMPersonality/ENV/lib/python3.12/site-packages/transformers/modeling_utils.py", line 4381, in from_pretrained
+    device_map = _get_device_map(model, device_map, max_memory, hf_quantizer, torch_dtype, keep_in_fp32_regex)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/project/6078835/gn533549/LLMPersonality/ENV/lib/python3.12/site-packages/transformers/modeling_utils.py", line 1304, in _get_device_map
+    hf_quantizer.validate_environment(device_map=device_map)
+  File "/project/6078835/gn533549/LLMPersonality/ENV/lib/python3.12/site-packages/transformers/quantizers/quantizer_bnb_4bit.py", line 104, in validate_environment
+    raise ValueError(
+ValueError: Some modules are dispatched on the CPU or the disk. Make sure you have enough GPU RAM to fit the quantized model. If you want to dispatch the model on the CPU or the disk while keeping these modules in 32-bit, you need to set `llm_int8_enable_fp32_cpu_offload=True` and pass a custom `device_map` to `from_pretrained`. Check https://huggingface.co/docs/transformers/main/en/main_classes/quantization#offload-between-cpu-and-gpu for more details. 
