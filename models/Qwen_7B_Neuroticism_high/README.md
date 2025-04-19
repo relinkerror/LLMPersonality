@@ -1,5 +1,5 @@
 ---
-base_model: ./models/DeepSeek-R1-Distill-Qwen-7B
+base_model: ./models/Qwen2.5-7B-Instruct
 library_name: peft
 ---
 
