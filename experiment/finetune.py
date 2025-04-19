@@ -1,151 +1,3 @@
-'''import argparse
-import gc
-import os
-import torch
-from datasets import Dataset
-from transformers import (
-    AutoTokenizer,
-    AutoModelForCausalLM,
-    DataCollatorForSeq2Seq,
-    TrainingArguments,
-    Trainer,
-    GenerationConfig,
-    BitsAndBytesConfig
-)
-from peft import LoraConfig, TaskType, get_peft_model
-
-def process_func(example, tokenizer, max_length=384):
-    """
-    将 messages 转换为用于指令微调的训练样本
-    """
-    # 拼接完整对话作为上下文
-    dialogue = ""
-    for message in example["messages"]:
-        role = message["role"]
-        content = message["content"]
-        if role == "system":
-            dialogue += f"[SYSTEM]: {content}\n"
-        elif role == "user":
-            dialogue += f"User: {content}\n"
-        elif role == "assistant":
-            dialogue += f"Assistant: {content}\n"
-
-    # 查找最后一个 user -> assistant 的配对
-    last_user_input = ""
-    target_output = ""
-    for i in range(len(example["messages"]) - 2, -1, -1):
-        if (example["messages"][i]["role"] == "user" and
-            example["messages"][i + 1]["role"] == "assistant"):
-            last_user_input = example["messages"][i]["content"]
-            target_output = example["messages"][i + 1]["content"]
-            break
-
-    if last_user_input and target_output:
-        instruction = tokenizer(f"User: {last_user_input}\n\n", add_special_tokens=False)
-        response = tokenizer(f"Assistant: {target_output}<|endofsentence|>", add_special_tokens=False)
-    else:
-        return {"input_ids": [], "attention_mask": [], "labels": []}  # 跳过无效对话
-
-    input_ids = instruction["input_ids"] + response["input_ids"] + [tokenizer.pad_token_id]
-    attention_mask = instruction["attention_mask"] + response["attention_mask"] + [1]
-    labels = [-100] * len(instruction["input_ids"]) + response["input_ids"] + [tokenizer.pad_token_id]
-
-    # 截断
-    if len(input_ids) > max_length:
-        input_ids = input_ids[:max_length]
-        attention_mask = attention_mask[:max_length]
-        labels = labels[:max_length]
-
-    return {
-        "input_ids": input_ids,
-        "attention_mask": attention_mask,
-        "labels": labels
-    }
-
-def main():
-    # 设置环境变量，指定使用的 GPU（例如，使用索引为 0 的 GPU）
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-
-    torch.cuda.empty_cache()
-    gc.collect()
-    print("程序开始时 - allocated:", torch.cuda.memory_allocated())
-    print("程序开始时 - reserved:", torch.cuda.memory_reserved())
-
-    parser = argparse.ArgumentParser(description="微调模型参数设置")
-    parser.add_argument("--dataset_path", type=str, required=True,
-                        help="JSONL 数据集路径")
-    parser.add_argument("--model_dir", type=str, required=True,
-                        help="模型及分词器目录")
-    parser.add_argument("--output_dir", type=str, required=True,
-                        help="训练后保存模型的目录")
-    args = parser.parse_args()
-
-    ds = Dataset.from_json(args.dataset_path)
-    tokenizer = AutoTokenizer.from_pretrained(args.model_dir, use_fast=False, trust_remote_code=True)
-    tokenizer.padding_side = 'right'
-    # 数据集预处理后：
-    tokenized_dataset = ds.map(lambda ex: process_func(ex, tokenizer), remove_columns=ds.column_names)
-    # 设置格式，确保转换后的张量为整数类型
-    tokenized_dataset.set_format(type="torch", columns=["input_ids", "attention_mask", "labels"])
-
-
-    lora_config = LoraConfig(
-        task_type=TaskType.CAUSAL_LM,
-        target_modules=["q_proj", "v_proj"],
-        inference_mode=False,
-        r=8,
-        lora_alpha=32,
-        lora_dropout=0.1
-    )
-
-    model = AutoModelForCausalLM.from_pretrained(
-        args.model_dir,
-        trust_remote_code=True,
-        torch_dtype=torch.half,
-        low_cpu_mem_usage=True,
-    )
-
-    # 使用 LoRA 包装模型，目标是只微调 "q_proj" 和 "v_proj" 层
-    model = get_peft_model(model, lora_config)
-
-
-    training_args = TrainingArguments(
-        output_dir=args.output_dir,
-        per_device_train_batch_size=8,
-        gradient_accumulation_steps=2,
-        logging_steps=10,
-        num_train_epochs=3,
-        gradient_checkpointing=True,
-        save_steps=100,
-        learning_rate=1e-4,
-        save_on_each_node=True
-    )
-
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=tokenized_dataset,
-        data_collator=DataCollatorForSeq2Seq(tokenizer=tokenizer, padding=True)
-    )
-
-
-    trainer.train()
-
-    test_text = "你好！"
-    inputs = tokenizer(f"User: {test_text}\n\n", return_tensors="pt")
-    inputs = inputs.to(model.device)
-    outputs = model.generate(**inputs, max_new_tokens=100)
-
-    result = tokenizer.decode(outputs[0], skip_special_tokens=True)
-
-    trainer.save_model(args.output_dir)
-    tokenizer.save_pretrained(args.output_dir)
-
-if __name__ == "__main__":
-    main()
-    print("程序结束时 - allocated:", torch.cuda.memory_allocated())
-    print("程序结束时 - reserved:", torch.cuda.memory_reserved())
-'''
 from datasets import Dataset
 import pandas as pd
 from transformers import AutoTokenizer, AutoModelForCausalLM, DataCollatorForSeq2Seq, TrainingArguments, Trainer
@@ -156,9 +8,17 @@ import argparse
 def process_func(examples: dict[str, list[any]]) -> dict[str, list[any]]:
     input_ids_batch, attention_mask_batch, labels_batch = [], [], []
 
-    for messages in examples["messages"]:
+    for idx, messages in enumerate(examples["messages"]):
+        # 初始调试：打印原始 messages
+        if idx < 5:
+            print(f"[DEBUG idx={idx}] raw messages: {messages}")
+
         # 拆分历史对话与回复
         prompt_messages, reply = messages[:-1], messages[-1]["content"]
+
+        # 调试：打印 reply
+        if idx < 5:
+            print(f"[DEBUG idx={idx}] reply: {reply}")
 
         # 构造 prompt 串（不做编码）
         prompt_str = tokenizer.apply_chat_template(
@@ -166,32 +26,52 @@ def process_func(examples: dict[str, list[any]]) -> dict[str, list[any]]:
             tokenize=False,
             add_generation_prompt=True
         )
+        # 调试：打印 prompt_str
+        if idx < 5:
+            print(f"[DEBUG idx={idx}] prompt_str: {prompt_str}")
 
         # 拼接完整生成序列
         full_str = prompt_str + reply + tokenizer.eos_token
+        # 调试：打印 full_str 预览和长度
+        if idx < 5:
+            print(f"[DEBUG idx={idx}] full_str preview: {full_str[:100]}...")
+            print(f"[DEBUG idx={idx}] full_str length: {len(full_str)}")
 
-        # 使用同一配置编码完整序列
+        # 编码完整序列，保证 fixed_length
         tokenized_full = tokenizer(
             full_str,
             truncation=True,
             max_length=512,
-            padding="max_length"
+            padding="max_length",
+            return_attention_mask=True
         )
-        ids  = tokenized_full["input_ids"]
+        ids = tokenized_full["input_ids"]
         mask = tokenized_full["attention_mask"]
+        # 调试：打印 tokenized_full 关键信息
+        if idx < 5:
+            print(f"[DEBUG idx={idx}] input_ids[:10]: {ids[:10]}")
+            print(f"[DEBUG idx={idx}] attention_mask sum: {sum(mask)}")
 
-        # 用相同配置编码 prompt，准确计算长度
-        prompt_ids = tokenizer(
+        # 编码 prompt 串，不做 padding，以准确计算长度
+        tokenized_prompt = tokenizer(
             prompt_str,
             truncation=True,
             max_length=512,
-            padding="max_length"
-        )["input_ids"]
-        prompt_len = len(prompt_ids)
+            padding=False,
+            return_attention_mask=True
+        )
+        # 真实 prompt 长度等于其 attention_mask 的有效 token 数
+        prompt_len = int(sum(tokenized_prompt["attention_mask"]))
+        # 调试：打印 prompt_len
+        if idx < 5:
+            print(f"[DEBUG idx={idx}] prompt_len: {prompt_len}")
 
         # 构造 labels：前 prompt_len 个置 -100，后续保留真实 id
         labels = ids.copy()
         labels[:prompt_len] = [-100] * prompt_len
+        # 调试：打印 labels 前 10 个
+        if idx < 5:
+            print(f"[DEBUG idx={idx}] labels[:10]: {labels[:10]}")
 
         # 聚合到 batch 列表
         input_ids_batch.append(ids)
@@ -199,9 +79,9 @@ def process_func(examples: dict[str, list[any]]) -> dict[str, list[any]]:
         labels_batch.append(labels)
 
     return {
-        "input_ids":      input_ids_batch,
+        "input_ids": input_ids_batch,
         "attention_mask": attention_mask_batch,
-        "labels":         labels_batch,
+        "labels": labels_batch,
     }
 
 # 应用方式：
